@@ -113,6 +113,7 @@ class XNorm(nn.Module):
 		self.rgb_enc.replace_logits(config.hidden_size)
 		self.rgb_out = Classifier(in_size=config.hidden_size, hidden_size=config.hidden_size, dropout=config.dropout, num_classes=config.num_classes)
 
+		# define audio here - feature extraction? Where to do this?
 		self.flow_enc = InceptionI3d(400, in_channels=2, dropout_rate=config.dropout)
 		self.flow_enc.load_state_dict(torch.load('checkpoints/flow_imagenet.pt'))
 		self.flow_enc.replace_logits(config.hidden_size)

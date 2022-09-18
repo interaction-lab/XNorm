@@ -9,10 +9,14 @@ import torch
 import torch.utils.data as data
 from torchvision import transforms
 
+import torchaudio
+from transformers import HubertForCTC, Wav2Vec2Processor
+
 import videotransforms
 
 action_list = ['put-down','pick-up','open','rinse','take','close','turn-on','move','turn-off','get']
 
+global bundle
 
 def sample_frames(start_frame, stop_frame, num_frames=8):
 	frame_list = range(start_frame, stop_frame+1)
@@ -57,6 +61,15 @@ def load_flow_frames(flow_u_root, flow_v_root, start_frame, stop_frame, num_fram
 
 	return np.asarray(frames, dtype=np.float32)
 
+def load_audio(audio_root):
+	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+	waveform, sample_rate = torchaudio.load(audio_root)
+	waveform = waveform.to(device)
+	# model = bundle.get_model()
+	waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
+	return waveform
+
 
 def video_to_tensor(pic):
 	"""Convert a ``numpy.ndarray`` to tensor.
@@ -76,6 +89,9 @@ class EPIC_Kitchens(data.Dataset):
 		self.dataset = pd.read_csv(csv_path)
 		self.data_root = data_root
 		self.num_frames = num_frames
+		bundle = torchaudio.pipelines.HUBERT_BASE
+		# need audio path
+		# self.audio
 
 		if train:
 			self.transform = transforms.Compose([
@@ -93,6 +109,10 @@ class EPIC_Kitchens(data.Dataset):
 		rgb_root = os.path.join(self.data_root, participant_id, 'rgb_frames', video_id)
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
 		rgb_frames = video_to_tensor(self.transform(rgb_frames))
+
+		# change flow to audio
+		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		# load audio
 
 		flow_u_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'u')
 		flow_v_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'v')
