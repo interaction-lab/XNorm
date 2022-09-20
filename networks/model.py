@@ -31,6 +31,7 @@ class EarlyFusion(nn.Module):
 		self.rgb_enc.load_state_dict(torch.load('checkpoints/rgb_imagenet.pt'))
 		self.rgb_enc.replace_logits(config.hidden_size)
 
+		# change this to HuBERT for feature extraction for audio first (easiest)
 		self.flow_enc = InceptionI3d(400, in_channels=2, dropout_rate=config.dropout)
 		self.flow_enc.load_state_dict(torch.load('checkpoints/flow_imagenet.pt'))
 		self.flow_enc.replace_logits(config.hidden_size)

@@ -112,6 +112,7 @@ class EPIC_Kitchens(data.Dataset):
 
 		# change flow to audio
 		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		
 		# load audio
 
 		flow_u_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'u')
