@@ -2,5 +2,6 @@
 *.txt
 checkpoints
 checkpoints2
+.DS_Store
 __pycache__
 networks/__pycache__
