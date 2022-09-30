@@ -97,9 +97,9 @@ class AR_solver(nn.Module):
 
 	def save_best_ckpt(self, val_metric):
 		def update_metric(val_metric):
-			if val_metric > self.best_val_metric:
-				self.best_val_metric = val_metric
-				return True
+			# if val_metric > self.best_val_metric:
+			# 	self.best_val_metric = val_metric
+			# 	return True
 			return False
 
 		if update_metric(val_metric):
@@ -129,5 +129,5 @@ class AR_solver(nn.Module):
 					break
 
 		# Test model
-		self.load_best_ckpt()
+		# self.load_best_ckpt()
 		self.test(test_loader)

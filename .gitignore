@@ -2,5 +2,7 @@
 *.txt
 checkpoints
 checkpoints2
+data
+datasets
 __pycache__
 networks/__pycache__

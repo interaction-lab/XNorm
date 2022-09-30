@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
+from pytube import YouTube
+
 import torch
 import torch.utils.data as data
 from torchvision import transforms
@@ -92,6 +94,7 @@ class EPIC_Kitchens(data.Dataset):
 		bundle = torchaudio.pipelines.HUBERT_BASE
 		# need audio path
 		# self.audio
+		self.audio = data_root
 
 		if train:
 			self.transform = transforms.Compose([
@@ -110,10 +113,12 @@ class EPIC_Kitchens(data.Dataset):
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
 		rgb_frames = video_to_tensor(self.transform(rgb_frames))
 
-		# change flow to audio
-		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		# load audio files
+		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
 		
 		# load audio
+		audio_wav_root = os.path.join(self.audio,"cucumbers.wav")
+		load_audio(audio_wav_root)
 
 		flow_u_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'u')
 		flow_v_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'v')
