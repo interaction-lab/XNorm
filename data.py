@@ -1,3 +1,4 @@
+from email.mime import audio
 import os
 import cv2
 import random
@@ -112,6 +113,7 @@ class EPIC_Kitchens(data.Dataset):
 
 		# change flow to audio
 		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		audio_waveform_sample_rate = torchaudio.load(audio_root)
 		
 		# load audio
 
@@ -122,7 +124,7 @@ class EPIC_Kitchens(data.Dataset):
 
 		label = int(self.dataset['verb'][index])
 
-		return rgb_frames, flow_frames, label
+		return rgb_frames, flow_frames, audio_waveform_sample_rate, label
 
 	def __len__(self):
 		return len(self.dataset)

@@ -26,18 +26,20 @@ class AR_solver(nn.Module):
 
 		# Initiate the networks
 		if self.fusion == 'early':
-			self.model = EarlyFusion(config)
-		elif self.fusion == 'late':
-			self.model = LateFusion(config)
-		elif self.fusion == 'rgb':
-			self.model = RGB(config)
-		elif self.fusion == 'flow':
-			self.model = Flow(config)
-		elif self.fusion == 'xnorm':
-			self.model = XNorm(config)
+			self.audio_video_model = EarlyFusion(config)
+			# self.model = EarlyFusion(config)
+		# elif self.fusion == 'late':
+		# 	self.model = LateFusion(config)
+		# elif self.fusion == 'rgb':
+		# 	self.model = RGB(config)
+		# elif self.fusion == 'flow':
+		# 	self.model = Flow(config)
+		# elif self.fusion == 'xnorm':
+		# 	self.model = XNorm(config)
 
 		# Setup the optimizers and loss function
-		opt_params = list(self.model.parameters())
+		opt_params = list(self.audio_video_model.parameters())
+		# opt_params = list(self.model.parameters())
 		self.optimizer = torch.optim.AdamW(opt_params, lr=config.learning_rate, weight_decay=config.weight_decay)
 		self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', patience=config.when, factor=0.5, verbose=False)
 		self.criterion = nn.CrossEntropyLoss()
@@ -51,10 +53,12 @@ class AR_solver(nn.Module):
 		self.optimizer.zero_grad()
 
 		rgb_frames, flow_frames, labels = rgb_frames.cuda(), flow_frames.cuda(), labels.cuda()
-		pred = self.model(rgb_frames, flow_frames)
+		# pred = self.model(rgb_frames, flow_frames)
+		pred = self.audio_video_model(rgb_frames, flow_frames)
 		loss = self.criterion(pred, labels)
 		loss.backward()
-		torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip)
+		torch.nn.utils.clip_grad_norm_(self.audio_video_model.parameters(), self.config.clip)
+		# torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip)
 
 		self.optimizer.step()
 
@@ -70,9 +74,10 @@ class AR_solver(nn.Module):
 			self.eval()
 			preds, gt = [], []
 			total_loss, total_samples = 0.0, 0
-			for (rgb_frames, flow_frames, labels) in test_loader:
-				rgb_frames, flow_frames, labels = rgb_frames.cuda(), flow_frames.cuda(), labels.cuda()
-				pred = self.model(rgb_frames, flow_frames)
+			for (rgb_frames, flow_frames, audio_waveform_sample_rate, labels) in test_loader:
+				rgb_frames, flow_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), flow_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
+				# pred = self.model(rgb_frames, flow_frames)
+				pred = self.audio_video_model(rgb_frames, audio_waveform_sample_rate)
 				loss = self.criterion(pred, labels)
 				_, pred = torch.max(pred, 1)
 				preds.append(pred)
@@ -92,8 +97,8 @@ class AR_solver(nn.Module):
 	def load_best_ckpt(self):
 		ckpt_name = os.path.join(self.config.ckpt_path, self.config.fusion+'_'+self.config.ablation+'_'+str(self.config.seed)+'_'+str(self.config.weight)+'.pt')
 		state_dict = torch.load(ckpt_name)
-
-		self.model.load_state_dict(state_dict['model'])
+		self.audio_video_model(state_dict['model'])
+		# self.model.load_state_dict(state_dict['model'])
 
 	def save_best_ckpt(self, val_metric):
 		def update_metric(val_metric):
@@ -104,7 +109,8 @@ class AR_solver(nn.Module):
 
 		if update_metric(val_metric):
 			ckpt_name = os.path.join(self.config.ckpt_path, self.config.fusion+'_'+self.config.ablation+'_'+str(self.config.seed)+'_'+str(self.config.weight)+'.pt')
-			torch.save({'model': self.model.state_dict()}, ckpt_name)
+			# torch.save({'model': self.model.state_dict()}, ckpt_name)
+			torch.save({'model': self.audio_video_model.state_dict()}, ckpt_name)
 
 	def print_metric(self, metric):
 		print('Loss: %.4f Acc: %.3f'%(metric[0], metric[1]))
@@ -114,8 +120,8 @@ class AR_solver(nn.Module):
 		patience = self.config.patience
 		for epochs in range(1, self.config.num_epochs+1):
 			print('Epoch: %d/%d' % (epochs, self.config.num_epochs))
-			for _, (rgb_frames, flow_frames, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
-				self.update(rgb_frames, flow_frames, labels)
+			for _, (rgb_frames, flow_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
+				self.update(rgb_frames, flow_frames, audio_waveform_sample_rate, labels)
 
 			# Validate model
 			val_loss, val_acc = self.val(val_loader)
