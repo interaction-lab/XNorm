@@ -2,6 +2,7 @@ from typing import OrderedDict
 import torch
 import torch.nn as nn
 from networks.pytorch_i3d import InceptionI3d
+from hubert import refactorWaveform
 
 
 class Classifier(nn.Module):
@@ -38,12 +39,22 @@ class EarlyFusion(nn.Module):
 
 		self.out = Classifier(in_size=config.hidden_size*2, hidden_size=config.hidden_size, dropout=config.dropout, num_classes=config.num_classes)
 
-	def forward(self, rgb_frames, flow_frames):
+	def forward(self, rgb_frames, flow_frames, audio_waveform_sample_rate):
 		B = rgb_frames.size(0)
 		rgb_features = self.rgb_enc(rgb_frames).view(B, -1)
 		flow_features = self.flow_enc(flow_frames).view(B, -1)
+		# get waveform
+		audio_features = refactorWaveform(audio_waveform_sample_rate)
 
 		return self.out(torch.cat([rgb_features, flow_features], dim=1))
+
+	def forward(self, rgb_frames, audio_waveform_sample_rate):
+		B = rgb_frames.size(0)
+		rgb_features = self.rgb_enc(rgb_frames).view(B, -1)
+		# get waveform
+		audio_features = refactorWaveform(audio_waveform_sample_rate)
+
+		return self.out(torch.cat([rgb_features, audio_features], dim=1))
 
 
 class LateFusion(nn.Module):

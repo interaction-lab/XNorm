@@ -2,7 +2,11 @@
 *.txt
 checkpoints
 checkpoints2
+<<<<<<< HEAD
 data
 datasets
+=======
+.DS_Store
+>>>>>>> 50b78f0823d8de4e895cb976e4e35fdf0f8f4199
 __pycache__
 networks/__pycache__

@@ -1,3 +1,4 @@
+from email.mime import audio
 import os
 import cv2
 import random
@@ -113,8 +114,14 @@ class EPIC_Kitchens(data.Dataset):
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
 		rgb_frames = video_to_tensor(self.transform(rgb_frames))
 
+<<<<<<< HEAD
 		# load audio files
 		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+=======
+		# change flow to audio
+		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		audio_waveform_sample_rate = torchaudio.load(audio_root)
+>>>>>>> 50b78f0823d8de4e895cb976e4e35fdf0f8f4199
 		
 		# load audio
 		audio_wav_root = os.path.join(self.audio,"cucumbers.wav")
@@ -127,7 +134,7 @@ class EPIC_Kitchens(data.Dataset):
 
 		label = int(self.dataset['verb'][index])
 
-		return rgb_frames, flow_frames, label
+		return rgb_frames, flow_frames, audio_waveform_sample_rate, label
 
 	def __len__(self):
 		return len(self.dataset)
