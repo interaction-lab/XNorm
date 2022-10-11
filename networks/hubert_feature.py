@@ -9,11 +9,10 @@ def refactorWaveform(audio_waveform_sample_rate):
     model = bundle.get_model()
     waveform, sample_rate = audio_waveform_sample_rate
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     waveform = waveform.to(device)
 
     waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
-
     features, _ = model.extract_features(waveform) # num_layers=1
     feature_array = features[11].squeeze()
     feature_array_1d = torch.mean(feature_array,0)

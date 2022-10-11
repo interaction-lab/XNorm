@@ -48,13 +48,13 @@ class AR_solver(nn.Module):
 		self.best_val_metric = 0.
 
 
-	def update(self, rgb_frames, flow_frames, labels):
+	def update(self, rgb_frames, audio_waveform_sample_rate, labels):
 		self.train()
 		self.optimizer.zero_grad()
 
-		rgb_frames, flow_frames, labels = rgb_frames.cuda(), flow_frames.cuda(), labels.cuda()
+		rgb_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
 		# pred = self.model(rgb_frames, flow_frames)
-		pred = self.audio_video_model(rgb_frames, flow_frames)
+		pred = self.audio_video_model(rgb_frames, audio_waveform_sample_rate)
 		loss = self.criterion(pred, labels)
 		loss.backward()
 		torch.nn.utils.clip_grad_norm_(self.audio_video_model.parameters(), self.config.clip)
@@ -74,8 +74,8 @@ class AR_solver(nn.Module):
 			self.eval()
 			preds, gt = [], []
 			total_loss, total_samples = 0.0, 0
-			for (rgb_frames, flow_frames, audio_waveform_sample_rate, labels) in test_loader:
-				rgb_frames, flow_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), flow_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
+			for (rgb_frames, audio_waveform_sample_rate, labels) in test_loader:
+				rgb_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
 				# pred = self.model(rgb_frames, flow_frames)
 				pred = self.audio_video_model(rgb_frames, audio_waveform_sample_rate)
 				loss = self.criterion(pred, labels)
@@ -120,8 +120,9 @@ class AR_solver(nn.Module):
 		patience = self.config.patience
 		for epochs in range(1, self.config.num_epochs+1):
 			print('Epoch: %d/%d' % (epochs, self.config.num_epochs))
-			for _, (rgb_frames, flow_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
-				self.update(rgb_frames, flow_frames, audio_waveform_sample_rate, labels)
+			# print(list(enumerate(train_loader)))
+			for _, (rgb_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
+				self.update(rgb_frames, audio_waveform_sample_rate, labels)
 
 			# Validate model
 			val_loss, val_acc = self.val(val_loader)
@@ -135,10 +136,5 @@ class AR_solver(nn.Module):
 					break
 
 		# Test model
-<<<<<<< HEAD
 		# self.load_best_ckpt()
 		self.test(test_loader)
-=======
-		self.load_best_ckpt()
-		self.test(test_loader)
->>>>>>> 50b78f0823d8de4e895cb976e4e35fdf0f8f4199

@@ -1,5 +1,6 @@
 from email.mime import audio
 import os
+import wave
 import cv2
 import random
 import numpy as np
@@ -19,7 +20,8 @@ import videotransforms
 
 action_list = ['put-down','pick-up','open','rinse','take','close','turn-on','move','turn-off','get']
 
-global bundle
+bundle = torchaudio.pipelines.HUBERT_BASE
+
 
 def sample_frames(start_frame, stop_frame, num_frames=8):
 	frame_list = range(start_frame, stop_frame+1)
@@ -65,13 +67,19 @@ def load_flow_frames(flow_u_root, flow_v_root, start_frame, stop_frame, num_fram
 	return np.asarray(frames, dtype=np.float32)
 
 def load_audio(audio_root):
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+	# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+	device = torch.device("cuda:0")
 	waveform, sample_rate = torchaudio.load(audio_root)
-	waveform = waveform.to(device)
-	# model = bundle.get_model()
+	# waveform = waveform.to(device)
+	model = bundle.get_model()
 	waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
-	return waveform
+	# average two channels
+	# when audio file has 2 channels, which represent stereo sound
+	# average can convert both stereo and mono to a single channel
+	averagedWaveform = torch.mean(waveform,0)
+	# print("reshape: ", waveform.shape)
+	# return waveform
+	return averagedWaveform
 
 
 def video_to_tensor(pic):
@@ -92,7 +100,7 @@ class EPIC_Kitchens(data.Dataset):
 		self.dataset = pd.read_csv(csv_path)
 		self.data_root = data_root
 		self.num_frames = num_frames
-		bundle = torchaudio.pipelines.HUBERT_BASE
+		# bundle = torchaudio.pipelines.HUBERT_BASE
 		# need audio path
 		# self.audio
 		self.audio = data_root
@@ -114,18 +122,14 @@ class EPIC_Kitchens(data.Dataset):
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
 		rgb_frames = video_to_tensor(self.transform(rgb_frames))
 
-<<<<<<< HEAD
-		# load audio files
-		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
-=======
+
 		# change flow to audio
-		audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
-		audio_waveform_sample_rate = torchaudio.load(audio_root)
->>>>>>> 50b78f0823d8de4e895cb976e4e35fdf0f8f4199
+		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		# audio_waveform_sample_rate = torchaudio.load(audio_root)
 		
 		# load audio
 		audio_wav_root = os.path.join(self.audio,"cucumbers.wav")
-		load_audio(audio_wav_root)
+		audio_waveform_sample_rate = load_audio(audio_wav_root)
 
 		flow_u_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'u')
 		flow_v_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'v')
@@ -134,7 +138,9 @@ class EPIC_Kitchens(data.Dataset):
 
 		label = int(self.dataset['verb'][index])
 
-		return rgb_frames, flow_frames, audio_waveform_sample_rate, label
+		return rgb_frames, audio_waveform_sample_rate, label
+		# return rgb_frames, flow_frames, label
+
 
 	def __len__(self):
 		return len(self.dataset)
