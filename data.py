@@ -67,18 +67,13 @@ def load_flow_frames(flow_u_root, flow_v_root, start_frame, stop_frame, num_fram
 	return np.asarray(frames, dtype=np.float32)
 
 def load_audio(audio_root):
-	# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	device = torch.device("cuda:0")
+	# device = torch.device("cuda:0")
 	waveform, sample_rate = torchaudio.load(audio_root)
-	# waveform = waveform.to(device)
-	model = bundle.get_model()
 	waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
 	# average two channels
 	# when audio file has 2 channels, which represent stereo sound
 	# average can convert both stereo and mono to a single channel
 	averagedWaveform = torch.mean(waveform,0)
-	# print("reshape: ", waveform.shape)
-	# return waveform
 	return averagedWaveform
 
 
@@ -123,23 +118,17 @@ class EPIC_Kitchens(data.Dataset):
 		rgb_frames = video_to_tensor(self.transform(rgb_frames))
 
 
-		# change flow to audio
+		# TODO: change audio root (after dataset are prepared)
 		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
-		# audio_waveform_sample_rate = torchaudio.load(audio_root)
-		
+
 		# load audio
 		audio_wav_root = os.path.join(self.audio,"cucumbers.wav")
 		audio_waveform_sample_rate = load_audio(audio_wav_root)
 
-		flow_u_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'u')
-		flow_v_root = os.path.join(self.data_root, participant_id, 'flow_frames', video_id, 'v')
-		flow_frames = load_flow_frames(flow_u_root, flow_v_root, (start_frame+1)//2, (stop_frame+1)//2, self.num_frames)
-		flow_frames = video_to_tensor(self.transform(flow_frames))
-
 		label = int(self.dataset['verb'][index])
 
+		# now only return the rgb_frames and the audio_waveform
 		return rgb_frames, audio_waveform_sample_rate, label
-		# return rgb_frames, flow_frames, label
 
 
 	def __len__(self):

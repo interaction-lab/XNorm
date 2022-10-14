@@ -3,34 +3,33 @@ from typing import OrderedDict
 import torch
 import torch.nn as nn
 from networks.pytorch_i3d import InceptionI3d
-# from hubert_feature import refactorWaveform
 
 # move hubert_feature.py file code to here
 import torchaudio
 import torch
 from transformers import HubertForCTC, Wav2Vec2Processor
 
-def refactorWaveform(audio_waveform_sample_rate):
-	print("audio_waveform_sample_rate",audio_waveform_sample_rate.shape)
+# TODO: currently not able to import hubert_feature.py and have the code pasted below
+# from hubert_feature import refactorWaveform
 
+# start for hubert_feature.py
+def refactorWaveform(audio_waveform_sample_rate):
+	# print("audio_waveform_sample_rate",audio_waveform_sample_rate.shape)
+	'''
+	Args:
+		audio_waveform_sample_rate: waveform
+	Returns:
+		1d array for audio feature from the waveform
+	'''
 	bundle = torchaudio.pipelines.HUBERT_BASE
 	model = bundle.get_model()
 	model = model.to(torch.device("cuda:0"))
 	waveform = audio_waveform_sample_rate
-	# waveform = waveform.to(torch.device("cuda:0"))
-	# all_features = []
 	features, _ = model.extract_features(waveform)
-	# for b in waveform:
-	# 	# b.to(torch.device("cpu"))
-	# 	features, _ = model.extract_features(b) # num_layers=1
-	# 	feature_array = features[-1].squeeze()
-	# 	all_features += feature_array
 	feature_array = features[-1].squeeze()
 	feature_array_1d = torch.mean(feature_array,1)
 	print("mean shape: ", feature_array_1d.shape)
-
 	return feature_array_1d
-    
 # end for hubert_feature.py
 
 
@@ -61,28 +60,13 @@ class EarlyFusion(nn.Module):
 		self.rgb_enc.load_state_dict(torch.load('checkpoints/rgb_imagenet.pt'))
 		self.rgb_enc.replace_logits(config.hidden_size)
 
-		# change this to HuBERT for feature extraction for audio first (easiest)
-		# self.flow_enc = InceptionI3d(400, in_channels=2, dropout_rate=config.dropout)
-		# self.flow_enc.load_state_dict(torch.load('checkpoints/flow_imagenet.pt'))
-		# self.flow_enc.replace_logits(config.hidden_size)
-
-		# self.out = Classifier(in_size=config.hidden_size*2, hidden_size=config.hidden_size, dropout=config.dropout, num_classes=config.num_classes)
+		# replace the classifier size with hidden_size + 768 (hubert feature size)
 		self.out = Classifier(in_size=config.hidden_size + 768, hidden_size=config.hidden_size, dropout=config.dropout, num_classes=config.num_classes)
-
-
-	# def forward(self, rgb_frames, flow_frames, audio_waveform_sample_rate):
-	# 	B = rgb_frames.size(0)
-	# 	rgb_features = self.rgb_enc(rgb_frames).view(B, -1)
-	# 	flow_features = self.flow_enc(flow_frames).view(B, -1)
-	# 	# get waveform
-	# 	audio_features = refactorWaveform(audio_waveform_sample_rate)
-
-	# 	return self.out(torch.cat([rgb_features, flow_features], dim=1))
 
 	def forward(self, rgb_frames, audio_waveform_sample_rate):
 		B = rgb_frames.size(0)
 		rgb_features = self.rgb_enc(rgb_frames).view(B, -1)
-		# get waveform
+		# get audio features from waveform
 		audio_features = refactorWaveform(audio_waveform_sample_rate)
 
 		return self.out(torch.cat([rgb_features, audio_features], dim=1))
