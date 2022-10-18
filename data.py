@@ -67,18 +67,17 @@ def load_flow_frames(flow_u_root, flow_v_root, start_frame, stop_frame, num_fram
 	return np.asarray(frames, dtype=np.float32)
 
 def load_audio(audio_root):
-	# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	device = torch.device("cuda:0")
+
+	# device = torch.device("cuda:0")
 	waveform, sample_rate = torchaudio.load(audio_root)
 	# waveform = waveform.to(device)
 	model = bundle.get_model()
 	waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
 	# average two channels
-	# when audio file has 2 channels, which represent stereo sound
+	# audio file has 2 channels, which represent stereo sound
 	# average can convert both stereo and mono to a single channel
 	averagedWaveform = torch.mean(waveform,0)
-	# print("reshape: ", waveform.shape)
-	# return waveform
+
 	return averagedWaveform
 
 

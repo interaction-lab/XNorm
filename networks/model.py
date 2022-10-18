@@ -1,37 +1,29 @@
-from email.mime import audio
-from typing import OrderedDict
 import torch
 import torch.nn as nn
 from networks.pytorch_i3d import InceptionI3d
-# from hubert_feature import refactorWaveform
-
-# move hubert_feature.py file code to here
 import torchaudio
 import torch
-from transformers import HubertForCTC, Wav2Vec2Processor
+# from transformers import HubertForCTC, Wav2Vec2Processor
 
 def refactorWaveform(audio_waveform_sample_rate):
-	print("audio_waveform_sample_rate",audio_waveform_sample_rate.shape)
+	# print("audio_waveform_sample_rate",audio_waveform_sample_rate.shape)
 
 	bundle = torchaudio.pipelines.HUBERT_BASE
 	model = bundle.get_model()
 	model = model.to(torch.device("cuda:0"))
 	waveform = audio_waveform_sample_rate
-	# waveform = waveform.to(torch.device("cuda:0"))
-	# all_features = []
+
+	# extract features from model into features array
 	features, _ = model.extract_features(waveform)
-	# for b in waveform:
-	# 	# b.to(torch.device("cpu"))
-	# 	features, _ = model.extract_features(b) # num_layers=1
-	# 	feature_array = features[-1].squeeze()
-	# 	all_features += feature_array
+
+	# convert feature array to be 1 dimensional
 	feature_array = features[-1].squeeze()
 	feature_array_1d = torch.mean(feature_array,1)
-	print("mean shape: ", feature_array_1d.shape)
+	# print("mean shape: ", feature_array_1d.shape)
 
 	return feature_array_1d
     
-# end for hubert_feature.py
+# end for audio extraction
 
 
 class Classifier(nn.Module):
