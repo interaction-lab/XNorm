@@ -34,7 +34,7 @@ parser.add_argument('--d_2', type=int, default=1024)
 
 # training
 parser.add_argument('--num_epochs', type=int, default=50)
-parser.add_argument('--batch_size', type=int, default=4)
+parser.add_argument('--batch_size', type=int, default=4) #change size from 32 to 4 - Flora/Lydia
 parser.add_argument('--learning_rate', type=float, default=1e-4)
 parser.add_argument('--weight_decay', type=float, default=1e-4)
 parser.add_argument('--clip', type=int, default=1.0)

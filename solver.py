@@ -27,7 +27,8 @@ class AR_solver(nn.Module):
 		# Initiate the networks
 		if self.fusion == 'early':
 			self.audio_video_model = EarlyFusion(config)
-			# self.model = EarlyFusion(config)
+			# commented out other models since they aren't set up with audio - Flora/Lydia
+		# 	self.model = EarlyFusion(config)
 		# elif self.fusion == 'late':
 		# 	self.model = LateFusion(config)
 		# elif self.fusion == 'rgb':
@@ -53,12 +54,13 @@ class AR_solver(nn.Module):
 		self.optimizer.zero_grad()
 
 		rgb_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
-		# pred = self.model(rgb_frames, flow_frames)
+		# create audio video model - Flora/Lydia
 		pred = self.audio_video_model(rgb_frames, audio_waveform_sample_rate)
 		loss = self.criterion(pred, labels)
 		loss.backward()
 		torch.nn.utils.clip_grad_norm_(self.audio_video_model.parameters(), self.config.clip)
-		# torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip)
+		# end audio model changes
+
 
 		self.optimizer.step()
 
@@ -74,6 +76,7 @@ class AR_solver(nn.Module):
 			self.eval()
 			preds, gt = [], []
 			total_loss, total_samples = 0.0, 0
+			# integrate audio with test - Flora/Lydia
 			for (rgb_frames, audio_waveform_sample_rate, labels) in test_loader:
 				rgb_frames, audio_waveform_sample_rate, labels = rgb_frames.cuda(), audio_waveform_sample_rate.cuda(), labels.cuda()
 				# pred = self.model(rgb_frames, flow_frames)
@@ -97,11 +100,13 @@ class AR_solver(nn.Module):
 	def load_best_ckpt(self):
 		ckpt_name = os.path.join(self.config.ckpt_path, self.config.fusion+'_'+self.config.ablation+'_'+str(self.config.seed)+'_'+str(self.config.weight)+'.pt')
 		state_dict = torch.load(ckpt_name)
+		# change to audio video model - Flora/Lydia
 		self.audio_video_model(state_dict['model'])
 		# self.model.load_state_dict(state_dict['model'])
 
 	def save_best_ckpt(self, val_metric):
 		def update_metric(val_metric):
+			# removed save functionality - Flora/Lydia
 			# if val_metric > self.best_val_metric:
 			# 	self.best_val_metric = val_metric
 			# 	return True
