@@ -96,6 +96,7 @@ class AR_solver(nn.Module):
 			self.print_metric([loss, acc])
 
 			return loss, acc
+			
 
 	def load_best_ckpt(self):
 		ckpt_name = os.path.join(self.config.ckpt_path, self.config.fusion+'_'+self.config.ablation+'_'+str(self.config.seed)+'_'+str(self.config.weight)+'.pt')
@@ -126,8 +127,15 @@ class AR_solver(nn.Module):
 		for epochs in range(1, self.config.num_epochs+1):
 			print('Epoch: %d/%d' % (epochs, self.config.num_epochs))
 			# print(list(enumerate(train_loader)))
-			for _, (rgb_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
-				self.update(rgb_frames, audio_waveform_sample_rate, labels)
+			try:
+				for _, (rgb_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
+					self.update(rgb_frames, audio_waveform_sample_rate, labels)
+			except RuntimeError:
+				print("Runtime error")
+				pass
+			# except TypeError:
+			# 	print("TypeError")
+			# 	pass
 
 			# Validate model
 			val_loss, val_acc = self.val(val_loader)

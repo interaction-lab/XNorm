@@ -14,13 +14,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=0)
 
 # data path
-parser.add_argument('--csv_root', type=str, default='./dataset/epic_kitchens')
-parser.add_argument('--data_root', type=str, default='./data/epic_kitchens')
+parser.add_argument('--csv_root', type=str, default='./dataset/annotations_dataset') #./dataset/epic_kitchens
+parser.add_argument('--data_root', type=str, default='./annotations_dataset/saved_frames') #./data/epic_kitchens
 parser.add_argument('--ckpt_path', type=str, default='./checkpoints')
 
 # data
 parser.add_argument('--num_workers', type=int, default=8)
-parser.add_argument('--num_classes', type=int, default=8)
+parser.add_argument('--num_classes', type=int, default=10)
 parser.add_argument('--num_frames', type=int, default=16)
 
 # architecture
@@ -34,7 +34,7 @@ parser.add_argument('--d_2', type=int, default=1024)
 
 # training
 parser.add_argument('--num_epochs', type=int, default=50)
-parser.add_argument('--batch_size', type=int, default=4) #change size from 32 to 4 - Flora/Lydia
+parser.add_argument('--batch_size', type=int, default=8) #change size from 32 to 4 - Flora/Lydia
 parser.add_argument('--learning_rate', type=float, default=1e-4)
 parser.add_argument('--weight_decay', type=float, default=1e-4)
 parser.add_argument('--clip', type=int, default=1.0)

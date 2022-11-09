@@ -65,6 +65,7 @@ class CenterCrop(object):
         Returns:
             PIL Image: Cropped image.
         """
+        print("imgs.shape: ", imgs.shape)
         t, h, w, c = imgs.shape
         th, tw = self.size
         i = int(np.round((h - th) / 2.))

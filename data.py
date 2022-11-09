@@ -6,8 +6,9 @@ import random
 import numpy as np
 import pandas as pd
 from PIL import Image
+import sys
 
-from pytube import YouTube
+# from pytube import YouTube
 
 import torch
 import torch.utils.data as data
@@ -19,6 +20,19 @@ from transformers import HubertForCTC, Wav2Vec2Processor
 import videotransforms
 
 action_list = ['put-down','pick-up','open','rinse','take','close','turn-on','move','turn-off','get']
+
+label_dict = {
+	"absent":0,
+	"being_helped_by_parents":1,
+	"drinking_eating":2,
+	"engaged_with_the_system":3,
+	"looking_away":4,
+	"not_in_seat_playing_in_background":5,
+	"playing_with_toys":6,
+	"talking_to_the_child's_self":7,
+	"talking_to_their_parents":8,
+	"touching_face":9
+}
 
 bundle = torchaudio.pipelines.HUBERT_BASE
 
@@ -33,7 +47,15 @@ def load_rgb_frames(rgb_root, start_frame, stop_frame, num_frames):
 	frame_list = sample_frames(start_frame, stop_frame, num_frames)
 	for frame_idx in frame_list:
 		frame_name = 'frame_'+str(frame_idx).zfill(10)+'.jpg'
-		img = cv2.imread(os.path.join(rgb_root, frame_name))[:, :, [2, 1, 0]]
+		if 's5' in rgb_root:
+			print("load rgb frames:", rgb_root, frame_name)
+		abs_path = os.path.dirname(os.path.abspath(__file__))
+		# print(abs_path)
+		if cv2.imread(os.path.join(abs_path, rgb_root, frame_name)) is None:
+			print("Truely read nothing!")
+			print(rgb_root, frame_name)
+			continue
+		img = cv2.imread(os.path.join(abs_path, rgb_root, frame_name))[:, :, [2, 1, 0]]
 		w,h,c = img.shape
 		if w < 226 or h < 226:
 			d = 226.-min(w,h)
@@ -42,6 +64,7 @@ def load_rgb_frames(rgb_root, start_frame, stop_frame, num_frames):
 		img = (img / 255.)*2 - 1
 		frames.append(img)
 
+	# print(np.asarray(frames, dtype=np.float32).ndim, "num dims for frames")
 	return np.asarray(frames, dtype=np.float32)
 
 
@@ -74,6 +97,7 @@ def load_audio(audio_root):
 	# audio file has 2 channels, which represent stereo sound
 	# average can convert both stereo and mono to a single channel
 	averagedWaveform = torch.mean(waveform,0)
+	# print("averagedWaveform: ", averagedWaveform)
 	return averagedWaveform
 
 
@@ -109,26 +133,31 @@ class EPIC_Kitchens(data.Dataset):
 
 	def __getitem__(self, index):
 		participant_id = self.dataset['participant_id'][index]
-		video_id = self.dataset['video_id'][index]
+		label = self.dataset['label'][index]
+		video_name = self.dataset['video_name'][index]
 		start_frame = int(self.dataset['start_frame'][index])
 		stop_frame = int(self.dataset['stop_frame'][index])
 
-		rgb_root = os.path.join(self.data_root, participant_id, 'rgb_frames', video_id)
+		rgb_root = os.path.join(self.data_root, participant_id, label, video_name)
+		print("rgb_root:", rgb_root)
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
-		rgb_frames = video_to_tensor(self.transform(rgb_frames))
-
-
-		# TODO: change audio root (after dataset are prepared)
-		# audio_root = os.path.join(self.data_root, participant_id, 'audio', video_id)
+		# if len(rgb_frames.ndim) < 4:
+		# 	print("dim of frame in getitem:", rgb_root, rgb_frames.ndim)
+		try:
+			rgb_frames = video_to_tensor(self.transform(rgb_frames))
+		except ValueError:
+			print("ValueError", ValueError)
+			print("rgb root: ", rgb_root, rgb_frames)
+			sys.exit()
 
 		# load audio
-		audio_wav_root = os.path.join(self.audio,"cucumbers.wav")
+		audio_wav_root = os.path.join(self.data_root, participant_id, label, video_name, "{}.wav".format(video_name))
 		audio_waveform_sample_rate = load_audio(audio_wav_root)
 
-		label = int(self.dataset['verb'][index])
+		label_index = label_dict[label]
 
 		# now only return the rgb_frames and the audio_waveform
-		return rgb_frames, audio_waveform_sample_rate, label
+		return rgb_frames, audio_waveform_sample_rate, label_index
 
 
 	def __len__(self):

@@ -70,8 +70,10 @@ class EarlyFusion(nn.Module):
 		rgb_features = self.rgb_enc(rgb_frames).view(B, -1)
 		# get audio features from waveform - Flora/Lydia
 		audio_features = refactorWaveform(audio_waveform_sample_rate)
-
-		return self.out(torch.cat([rgb_features, audio_features], dim=1))
+		# print("rgb: ", rgb_features.shape)
+		# print("audio: ", rgb_features.shape)
+		output = torch.cat([rgb_features, audio_features], dim=1)
+		return self.out(output)
 		#end audio changes
 
 

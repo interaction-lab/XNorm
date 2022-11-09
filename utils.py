@@ -25,9 +25,9 @@ def set_seed(seed):
 
 def get_data_loaders(config):
 	csv_root = config.csv_root
-	train_csv = os.path.join(csv_root, 'train_copy.csv')
-	val_csv = os.path.join(csv_root, 'val_copy.csv')
-	test_csv = os.path.join(csv_root, 'test_copy.csv')
+	train_csv = os.path.join(csv_root, 'train.csv')
+	val_csv = os.path.join(csv_root, 'val.csv')
+	test_csv = os.path.join(csv_root, 'test.csv')
 
 	data_root = config.data_root
 	batch_size = config.batch_size
