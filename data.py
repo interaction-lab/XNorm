@@ -47,15 +47,13 @@ def load_rgb_frames(rgb_root, start_frame, stop_frame, num_frames):
 	frame_list = sample_frames(start_frame, stop_frame, num_frames)
 	for frame_idx in frame_list:
 		frame_name = 'frame_'+str(frame_idx).zfill(10)+'.jpg'
-		if 's5' in rgb_root:
-			print("load rgb frames:", rgb_root, frame_name)
-		abs_path = os.path.dirname(os.path.abspath(__file__))
-		# print(abs_path)
-		if cv2.imread(os.path.join(abs_path, rgb_root, frame_name)) is None:
+		# if 's5' in rgb_root:
+		# 	print("load rgb frames:", rgb_root, frame_name)
+		if cv2.imread(os.path.join(rgb_root, frame_name)) is None:
 			print("Truely read nothing!")
 			print(rgb_root, frame_name)
 			continue
-		img = cv2.imread(os.path.join(abs_path, rgb_root, frame_name))[:, :, [2, 1, 0]]
+		img = cv2.imread(os.path.join(rgb_root, frame_name))[:, :, [2, 1, 0]]
 		w,h,c = img.shape
 		if w < 226 or h < 226:
 			d = 226.-min(w,h)
@@ -139,7 +137,7 @@ class EPIC_Kitchens(data.Dataset):
 		stop_frame = int(self.dataset['stop_frame'][index])
 
 		rgb_root = os.path.join(self.data_root, participant_id, label, video_name)
-		print("rgb_root:", rgb_root)
+		# print("rgb_root:", rgb_root)
 		rgb_frames = load_rgb_frames(rgb_root, start_frame, stop_frame, self.num_frames)
 		# if len(rgb_frames.ndim) < 4:
 		# 	print("dim of frame in getitem:", rgb_root, rgb_frames.ndim)
@@ -155,6 +153,7 @@ class EPIC_Kitchens(data.Dataset):
 		audio_waveform_sample_rate = load_audio(audio_wav_root)
 
 		label_index = label_dict[label]
+		# print("label index: ", label_index, label, "\nrgb_frames: ", rgb_frames.shape, "\naudio_waveform_sample_rate: ", audio_waveform_sample_rate)
 
 		# now only return the rgb_frames and the audio_waveform
 		return rgb_frames, audio_waveform_sample_rate, label_index

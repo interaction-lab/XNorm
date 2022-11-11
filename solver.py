@@ -126,13 +126,12 @@ class AR_solver(nn.Module):
 		patience = self.config.patience
 		for epochs in range(1, self.config.num_epochs+1):
 			print('Epoch: %d/%d' % (epochs, self.config.num_epochs))
-			# print(list(enumerate(train_loader)))
-			try:
-				for _, (rgb_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
-					self.update(rgb_frames, audio_waveform_sample_rate, labels)
-			except RuntimeError:
-				print("Runtime error")
-				pass
+			# try:
+			for _, (rgb_frames, audio_waveform_sample_rate, labels) in tqdm(enumerate(train_loader), total=len(train_loader)):
+				self.update(rgb_frames, audio_waveform_sample_rate, labels)
+			# except RuntimeError:
+			# 	print("Runtime error")
+			# 	pass
 			# except TypeError:
 			# 	print("TypeError")
 			# 	pass
